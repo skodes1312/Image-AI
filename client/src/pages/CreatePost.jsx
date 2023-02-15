@@ -16,8 +16,56 @@ const CreatePost = () => {
   const [generatingImg, setGeneratingImg] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const generateImage = () => {};
-  const submitHandler = () => {};
+  const generateImage = async () => {
+    if (form.prompt) {
+      try {
+        setGeneratingImg(true);
+        const response = await fetch("http://localhost:8080/api/v1/dalle", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ prompt: form.prompt }),
+        });
+
+        const data = await response.json();
+
+        setForm({ ...form, photo: `data:image/jpeg;base64,${data.photo}` });
+      } catch (error) {
+        alert(error);
+      } finally {
+        setGeneratingImg(false);
+      }
+    } else {
+      alert("Please enter a prompt");
+    }
+  };
+  const submitHandler = async (e) => {
+    e.preventDefault();
+
+    if (form.prompt && form.photo) {
+      setLoading(true);
+
+      try {
+        const response = await fetch("http://localhost:8080/api/v1/post", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(form),
+        });
+
+        await response.json();
+        navigate("/");
+      } catch (error) {
+        alert(error);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      alert("Please enter a prompt to start creating an image");
+    }
+  };
   const changeHandler = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -35,7 +83,7 @@ const CreatePost = () => {
           DALL-E AI and share them with the community.
         </p>
       </div>
-      <form className="mt-16 max-w-3xl" onsubmit={submitHandler}>
+      <form className="mt-16 max-w-3xl" onSubmit={submitHandler}>
         <div className="flex flex-col gap-5">
           <FormField
             LabelName="Your Name"
